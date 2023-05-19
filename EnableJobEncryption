@@ -1,0 +1,41 @@
+# This script enabled encryptions on all jobs.
+#
+# Author: Byron Persino
+# Date: 2023-05-19
+#
+# Summary: This script enabled encryptions on all jobs. 
+
+# Import the Veeam PowerShell snap-in
+Import-Module VeeamPSSnapin
+
+# Connect to the Veeam Backup & Replication server
+Connect-VBRServer -Server "localhost"
+
+# Get a list of all jobs
+$jobs = Get-VBRJob
+
+# Loop through the jobs
+foreach($job in $jobs) {
+
+    # Check if encryption is enabled for the job
+    if ($job.GetOptions().BackupStorageOptions.StorageEncryptionEnabled -eq $false) {
+
+        # Generate a new encryption key
+        $key = Get-VBREncryptionKey
+
+        # Enable encryption for the job
+        Write-Host "Enabling encryption for job $($job.Name)"
+        Set-VBRJobAdvancedStorageOptions -Job $job -EnableEncryption $true -EncryptionKey $key
+
+        # Write the encryption key to the console
+        Write-Host "Encryption key: $key"
+        Write-Host ""
+    }
+    else {
+        Write-Host "Job $($job.Name) already has encryption set"
+        Write-Host ""
+    }
+}
+
+# Disconnect from the Veeam Backup & Replication server
+Disconnect-VBRServer
